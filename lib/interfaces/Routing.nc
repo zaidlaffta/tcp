@@ -1,6 +1,6 @@
 #include "../../includes/packet.h"
 
-interface RoutingHandler {
+interface Routing {
     command void start();
     command void send(pack* msg);
     command void recieve(pack* routing_packet);

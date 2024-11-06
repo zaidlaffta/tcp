@@ -5,8 +5,8 @@
 #undef min
 #define min(a,b) ((a) < (b) ? (a) : (b))
 
-module RoutingHandlerP {
-    provides interface RoutingHandler;
+module RoutingP {
+    provides interface Routing;
 
     uses interface List<Route> as RoutingTable;
     uses interface SimpleSend as Sender;
@@ -199,7 +199,7 @@ implementation {
      * Initializes the routing process
      * Have to call updateNeighbors first
      */
-    command void RoutingHandler.start() {
+    command void Routing.start() {
         if (call RoutingTable.size() == 0) {
             dbg(ROUTING_CHANNEL, "ERROR - Can't route with no neighbors! Make sure to updateNeighbors first.\n");
             return;
@@ -214,7 +214,7 @@ implementation {
     /**
      * Sends given packet based on the routing table's next hop value
      */
-    command void RoutingHandler.send(pack* msg) {
+    command void Routing.send(pack* msg) {
         Route route;
 
         if (!inTable(msg->dest)) {
@@ -238,7 +238,7 @@ implementation {
      * Called when the node recieves a routing packet
      * Processes the route information from the packet
      */
-    command void RoutingHandler.recieve(pack* routing_packet) {
+    command void Routing.recieve(pack* routing_packet) {
         uint16_t i;
 
         // Iterate over each route in the payload
@@ -328,10 +328,10 @@ implementation {
     }
 
     /**
-     * Updates the neighbor list associated with this routing handler.
+     * Updates the neighbor list associated with this routing .
      * Updates routes in table for neighbors
      */
-    command void RoutingHandler.updateNeighbors(uint32_t* neighbors, uint16_t numNeighbors) {
+    command void Routing.updateNeighbors(uint32_t* neighbors, uint16_t numNeighbors) {
         uint16_t i;
         uint16_t size = call RoutingTable.size();
 
@@ -393,7 +393,7 @@ implementation {
      * Called by simulation
      * Prints the routing table in 'destination, next hop, cost' format
      */
-    command void RoutingHandler.printRoutingTable() {
+    command void Routing.printRoutingTable() {
         uint16_t size = call RoutingTable.size();
         uint16_t i;
 
@@ -418,7 +418,7 @@ implementation {
         msg.src = TOS_NODE_ID;
         msg.TTL = 1;
         msg.protocol = PROTOCOL_DV;
-        msg.seq = signal RoutingHandler.getSequence();
+        msg.seq = signal Routing.getSequence();
 
         memset((&msg.payload), '\0', PACKET_MAX_PAYLOAD_SIZE);
 

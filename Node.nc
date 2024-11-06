@@ -18,15 +18,15 @@ module Node{
 
     uses interface CommandHandler;
 
-    uses interface FloodingHandler;
+    uses interface Flooding;
 
     uses interface Timer<TMilli> as NeighborTimer;
-    uses interface NeighborDiscoveryHandler;
+    uses interface NeighborDiscovery;
 
     uses interface Timer<TMilli> as RoutingTimer;
-    uses interface RoutingHandler;
+    uses interface Routing;
 
-    uses interface TCPHandler;
+    uses interface TCP;
 }
 
 implementation{
@@ -70,7 +70,7 @@ implementation{
                 dbg(GENERAL_CHANNEL, "--- Packet Payload: %s\n", msg->payload);
                 dbg(GENERAL_CHANNEL, "--- Sending Reply...\n");
                 makePack(&sendPackage, msg->dest, msg->src, MAX_TTL, PROTOCOL_PINGREPLY, current_seq++, (uint8_t*)msg->payload, PACKET_MAX_PAYLOAD_SIZE);
-                call RoutingHandler.send(&sendPackage);
+                call Routing.send(&sendPackage);
                 break;
                     
             case PROTOCOL_PINGREPLY:
@@ -95,11 +95,11 @@ implementation{
 
             // Distance Vector
             if (myMsg->protocol == PROTOCOL_DV) {
-                call RoutingHandler.recieve(myMsg);
+                call Routing.recieve(myMsg);
             
             // TCP
             } else if (myMsg->protocol == PROTOCOL_TCP && myMsg->dest == TOS_NODE_ID) {
-                call TCPHandler.recieve(myMsg);
+                call TCP.recieve(myMsg);
 
             // Regular Ping
             } else if (myMsg->dest == TOS_NODE_ID) {
@@ -107,11 +107,11 @@ implementation{
                 
             // Neighbor Discovery
             } else if (myMsg->dest == AM_BROADCAST_ADDR) {
-                call NeighborDiscoveryHandler.recieve(myMsg);
+                call NeighborDiscovery.recieve(myMsg);
 
             // Not Destination
             } else {
-                call RoutingHandler.send(myMsg);
+                call Routing.send(myMsg);
             }
             return msg;
         }
@@ -121,36 +121,36 @@ implementation{
 
  
     event void NeighborTimer.fired() {
-        call NeighborDiscoveryHandler.discover();
+        call NeighborDiscovery.discover();
     }
 
     event void RoutingTimer.fired() {
-        uint32_t* neighbors = call NeighborDiscoveryHandler.getNeighbors();
-        uint16_t numNeighbors = call NeighborDiscoveryHandler.numNeighbors();
+        uint32_t* neighbors = call NeighborDiscovery.getNeighbors();
+        uint16_t numNeighbors = call NeighborDiscovery.numNeighbors();
 
-        call RoutingHandler.updateNeighbors(neighbors, numNeighbors);
-        call RoutingHandler.start();
+        call Routing.updateNeighbors(neighbors, numNeighbors);
+        call Routing.start();
     }
 
-    event void TCPHandler.route(pack* msg) {
-        call RoutingHandler.send(msg);
+    event void TCP.route(pack* msg) {
+        call Routing.send(msg);
     }
 
     /**
-     * Called when the neighbor discovery handler needs the sequence number for a packet
+     * Called when the neighbor discovery  needs the sequence number for a packet
      *
      * @return the current sequence number
      */
-    event uint16_t NeighborDiscoveryHandler.getSequence() {
+    event uint16_t NeighborDiscovery.getSequence() {
         return getSequence();
     }
 
 
-    event uint16_t RoutingHandler.getSequence() {
+    event uint16_t Routing.getSequence() {
         return getSequence();
     }
 
-    event uint16_t TCPHandler.getSequence() {
+    event uint16_t TCP.getSequence() {
         return getSequence();
     }
 
@@ -160,21 +160,21 @@ implementation{
     event void CommandHandler.ping(uint16_t destination, uint8_t *payload){
         dbg(GENERAL_CHANNEL, "PING EVENT \n");
         makePack(&sendPackage, TOS_NODE_ID, destination, MAX_TTL, PROTOCOL_PING, current_seq++, payload, PACKET_MAX_PAYLOAD_SIZE);
-        call RoutingHandler.send(&sendPackage);
+        call Routing.send(&sendPackage);
     }
 
     /**
      * Called when simulation issues a command to print the list of neighbor node IDs
      */
     event void CommandHandler.printNeighbors() {
-        call NeighborDiscoveryHandler.printNeighbors();
+        call NeighborDiscovery.printNeighbors();
     }
 
     /**
      * Called when simulation issues a command to print the routing table for this node
      */
     event void CommandHandler.printRouteTable() {
-        call RoutingHandler.printRoutingTable();
+        call Routing.printRoutingTable();
     }
 
     event void CommandHandler.printLinkState(){ dbg(GENERAL_CHANNEL, "printLinkState\n"); }
@@ -183,7 +183,7 @@ implementation{
      * Same as printRouteTable()
      */
     event void CommandHandler.printDistanceVector() {
-        call RoutingHandler.printRoutingTable();
+        call Routing.printRoutingTable();
     }
 
     /**
@@ -192,7 +192,7 @@ implementation{
      */
     event void CommandHandler.setTestServer(uint16_t port) {
         dbg(GENERAL_CHANNEL, "TEST_SERVER EVENT\n");
-        call TCPHandler.startServer(port);
+        call TCP.startServer(port);
     }
 
     /**
@@ -203,7 +203,7 @@ implementation{
     event void CommandHandler.setTestClient(uint16_t dest, uint16_t srcPort, 
                                             uint16_t destPort, uint16_t transfer) {
         dbg(GENERAL_CHANNEL, "TEST_CLIENT EVENT\n");
-        call TCPHandler.startClient(dest, srcPort, destPort, transfer);
+        call TCP.startClient(dest, srcPort, destPort, transfer);
     }
 
     /**
@@ -212,7 +212,7 @@ implementation{
      */
     event void CommandHandler.closeClient(uint16_t dest, uint16_t srcPort, uint16_t destPort) {
         dbg(GENERAL_CHANNEL, "CLOSE_CLIENT EVENT\n");
-        call TCPHandler.closeClient(dest, srcPort, destPort);
+        call TCP.closeClient(dest, srcPort, destPort);
     }
 
     event void CommandHandler.setAppServer(){ dbg(GENERAL_CHANNEL, "setAppServer\n"); }

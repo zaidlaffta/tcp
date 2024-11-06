@@ -1,7 +1,7 @@
 #include "../../includes/packet.h"
 
-module NeighborDiscoveryHandlerP {
-    provides interface NeighborDiscoveryHandler;
+module NeighborDiscoveryP {
+    provides interface NeighborDiscovery;
 
     uses interface SimpleSend as Sender;
     uses interface Hashmap<uint16_t> as Neighbors;
@@ -70,7 +70,7 @@ implementation {
         neighborPack->src = TOS_NODE_ID;
         neighborPack->dest = AM_BROADCAST_ADDR;
         neighborPack->TTL = 1;
-        neighborPack->seq = signal NeighborDiscoveryHandler.getSequence();
+        neighborPack->seq = signal NeighborDiscovery.getSequence();
         neighborPack->protocol = PROTOCOL_PING;
         memcpy(neighborPack->payload, "Neighbor Discovery\n", 19);
     }
@@ -78,7 +78,7 @@ implementation {
     /**
      * Sends out neighbor discovery packet with the sequence number passed to it
      */
-    command void NeighborDiscoveryHandler.discover() {
+    command void NeighborDiscovery.discover() {
         pack neighborPack;
         decrement_timeout();
         createNeighborPack(&neighborPack);
@@ -88,33 +88,33 @@ implementation {
     /**
      * Called when node recieves neighbor discovery packet
      */
-    command void NeighborDiscoveryHandler.recieve(pack* msg) {
+    command void NeighborDiscovery.recieve(pack* msg) {
         protocolHandler(msg);
     }
 
     /**
      * Returns list of neighbors. Pair with numNeighbors() to iterate
      */
-    command uint32_t* NeighborDiscoveryHandler.getNeighbors() {
+    command uint32_t* NeighborDiscovery.getNeighbors() {
         return call Neighbors.getKeys();
     }
 
     /**
      * Returns the number of neighbors
      */
-    command uint16_t NeighborDiscoveryHandler.numNeighbors() {
+    command uint16_t NeighborDiscovery.numNeighbors() {
         return call Neighbors.size();
     }
 
     /**
      * Prints the list of neighbors for this node
      */
-    command void NeighborDiscoveryHandler.printNeighbors() {
+    command void NeighborDiscovery.printNeighbors() {
         uint16_t i;
-        uint32_t* neighbors = call NeighborDiscoveryHandler.getNeighbors();
+        uint32_t* neighbors = call NeighborDiscovery.getNeighbors();
 
         dbg(GENERAL_CHANNEL, "--- Neighbors of Node %d ---\n", TOS_NODE_ID);
-        for (i = 0; i < call NeighborDiscoveryHandler.numNeighbors(); i++) {
+        for (i = 0; i < call NeighborDiscovery.numNeighbors(); i++) {
             dbg(GENERAL_CHANNEL, "%d\n", neighbors[i]);
         }
         dbg(GENERAL_CHANNEL, "---------------------------\n");

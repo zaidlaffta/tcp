@@ -5,8 +5,8 @@
 #include "../../includes/packet.h"
 #include "../../includes/tcp_header.h"
 
-module TCPHandlerP {
-    provides interface TCPHandler;
+module TCPP {
+    provides interface TCP;
 
     uses interface Timer<TMilli> as PacketTimer;
     uses interface Hashmap<socket_store_t> as SocketMap;
@@ -431,7 +431,7 @@ implementation {
         packet = call CurrentMessages.front();
         memcpy(&header, &packet.payload, PACKET_MAX_PAYLOAD_SIZE);
 
-        signal TCPHandler.route(&packet);
+        signal TCP.route(&packet);
         call PacketTimer.startOneShot(call PacketTimer.getNow() + 2*socket.RTT);
     }
 
@@ -524,7 +524,7 @@ implementation {
      *
      * @param port the port to listen for connections on.
      */
-    command void TCPHandler.startServer(uint16_t port) {
+    command void TCP.startServer(uint16_t port) {
         uint16_t num_connections = call SocketMap.size();
         socket_store_t socket;
 
@@ -557,7 +557,7 @@ implementation {
      * @param transfer the number of bytes to transfer w/ value: (0..transfer-1).
      * @param pointer to node's sequence number
      */
-    command void TCPHandler.startClient(uint16_t dest, uint16_t srcPort,
+    command void TCP.startClient(uint16_t dest, uint16_t srcPort,
                                         uint16_t destPort, uint16_t transfer) {
         socket_store_t socket;
         socket_t socketFD;
@@ -594,7 +594,7 @@ implementation {
      * @param srcPort the local port number associated with the connection.
      * @param destPort the server's port associated with the connection.
      */
-    command void TCPHandler.closeClient(uint16_t dest, uint16_t srcPort, uint16_t destPort) {
+    command void TCP.closeClient(uint16_t dest, uint16_t srcPort, uint16_t destPort) {
         socket_t socketFD = getFD(dest, srcPort, destPort);
         dbg(TRANSPORT_CHANNEL, "Closing client on Port %hhu with destination %hu: %hhu\n", srcPort, dest, destPort);
         
@@ -613,7 +613,7 @@ implementation {
      *
      * @param msg the TCP packet to process
      */
-    command void TCPHandler.recieve(pack* msg) {
+    command void TCP.recieve(pack* msg) {
         // FIXME: Instantly add msg into recieve buffer, more messages may be waiting
                                     
         socket_t socketFD;
@@ -732,7 +732,7 @@ implementation {
                 }
                 else if (header.flag == DAT) {
                     updateState(socketFD, ESTABLISHED);
-                    call TCPHandler.recieve(msg);
+                    call TCP.recieve(msg);
                     break;
                 }
                 else{
@@ -749,7 +749,7 @@ implementation {
                 }
                 else if (header.flag == DAT) {
                     updateState(socketFD, ESTABLISHED);
-                    call TCPHandler.recieve(msg);
+                    call TCP.recieve(msg);
                     break;
                 }
                 else {
@@ -813,7 +813,7 @@ implementation {
         }
 
         if (!call CurrentMessages.isEmpty()) {
-            signal TCPHandler.route(&packet);
+            signal TCP.route(&packet);
             call PacketTimer.startOneShot(call PacketTimer.getNow() + 2*socket.RTT);
         }
     }
@@ -843,7 +843,7 @@ implementation {
 
         synPack.src = TOS_NODE_ID;
         synPack.dest = socket.dest.addr;
-        synPack.seq = signal TCPHandler.getSequence();
+        synPack.seq = signal TCP.getSequence();
         synPack.TTL = MAX_TTL;
         synPack.protocol = PROTOCOL_TCP;
 
@@ -882,7 +882,7 @@ implementation {
 
         ackPack.src = TOS_NODE_ID;
         ackPack.dest = socket.dest.addr;
-        ackPack.seq = signal TCPHandler.getSequence();
+        ackPack.seq = signal TCP.getSequence();
         ackPack.TTL = MAX_TTL;
         ackPack.protocol = PROTOCOL_TCP;
 
@@ -897,7 +897,7 @@ implementation {
         // Insert the ackHeader into the packet
         memcpy(&ackPack.payload, &ackHeader, PACKET_MAX_PAYLOAD_SIZE);
         
-        signal TCPHandler.route(&ackPack);
+        signal TCP.route(&ackPack);
     }            
 
     /**
@@ -919,7 +919,7 @@ implementation {
 
         finPack.src = TOS_NODE_ID;
         finPack.dest = socket.dest.addr;
-        finPack.seq = signal TCPHandler.getSequence();
+        finPack.seq = signal TCP.getSequence();
         finPack.TTL = MAX_TTL;
         finPack.protocol = PROTOCOL_TCP;
 
@@ -954,7 +954,7 @@ implementation {
 
         datPack.src = TOS_NODE_ID;
         datPack.dest = socket.dest.addr;
-        datPack.seq = signal TCPHandler.getSequence();
+        datPack.seq = signal TCP.getSequence();
         datPack.TTL = MAX_TTL;
         datPack.protocol = PROTOCOL_TCP;
 

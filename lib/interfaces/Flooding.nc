@@ -1,5 +1,5 @@
 #include "../../includes/packet.h"
 
-interface FloodingHandler {
+interface Flooding {
     command void flood(pack* msg);
 }

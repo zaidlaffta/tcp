@@ -7,27 +7,27 @@
 #include <Timer.h>
 #include "../../includes/route.h"
 
-configuration RoutingHandlerC {
-    provides interface RoutingHandler;
+configuration RoutingC {
+    provides interface Routing;
 }
 
 implementation {
-    components RoutingHandlerP;
-    RoutingHandler = RoutingHandlerP;
+    components RoutingP;
+    Routing = RoutingP;
 
     components RandomC;
-    RoutingHandlerP.Random -> RandomC;
+    RoutingP.Random -> RandomC;
 
     // No more than 256 nodes in system 
     components new ListC(Route, 256);
-    RoutingHandlerP.RoutingTable -> ListC;
+    RoutingP.RoutingTable -> ListC;
 
     components new SimpleSendC(AM_PACK);
-    RoutingHandlerP.Sender -> SimpleSendC;
+    RoutingP.Sender -> SimpleSendC;
 
     components new TimerMilliC() as TriggeredEventTimer;
-    RoutingHandlerP.TriggeredEventTimer -> TriggeredEventTimer;
+    RoutingP.TriggeredEventTimer -> TriggeredEventTimer;
 
     components new TimerMilliC() as RegularTimer;
-    RoutingHandlerP.RegularTimer -> RegularTimer;
+    RoutingP.RegularTimer -> RegularTimer;
 }

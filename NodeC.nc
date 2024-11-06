@@ -27,8 +27,8 @@ implementation {
     components CommandHandlerC;
     Node.CommandHandler -> CommandHandlerC;
 
-    components FloodingHandlerC;
-    Node.FloodingHandler -> FloodingHandlerC;
+    components FloodingC;
+    Node.Flooding -> FloodingC;
 
     components new TimerMilliC() as NeighborTimer;
     Node.NeighborTimer -> NeighborTimer;
@@ -36,12 +36,12 @@ implementation {
     components new TimerMilliC() as RoutingTimer;
     Node.RoutingTimer -> RoutingTimer;
 
-    components NeighborDiscoveryHandlerC;
-    Node.NeighborDiscoveryHandler -> NeighborDiscoveryHandlerC;
+    components NeighborDiscoveryC;
+    Node.NeighborDiscovery -> NeighborDiscoveryC;
 
-    components RoutingHandlerC;
-    Node.RoutingHandler -> RoutingHandlerC;
+    components RoutingC;
+    Node.Routing -> RoutingC;
 
-    components TCPHandlerC;
-    Node.TCPHandler -> TCPHandlerC;
+    components TCPC;
+    Node.TCP -> TCPC;
 }

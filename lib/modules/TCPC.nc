@@ -1,25 +1,25 @@
 #include <Timer.h>
 #include "../../includes/socket.h"
 
-configuration TCPHandlerC{
-    provides interface TCPHandler;
+configuration TCPC{
+    provides interface TCP;
 }
 
 implementation {
-    components TCPHandlerP;
-    TCPHandler = TCPHandlerP;
+    components TCPP;
+    TCP = TCPP;
     
     components new TimerMilliC();
-    TCPHandlerP.PacketTimer -> TimerMilliC;
+    TCPP.PacketTimer -> TimerMilliC;
     
     components new HashmapC(socket_store_t, MAX_NUM_OF_SOCKETS);
-    TCPHandlerP.SocketMap -> HashmapC;
+    TCPP.SocketMap -> HashmapC;
 
     components new ListC(socket_store_t, MAX_NUM_OF_SOCKETS) as ServerListC;
-    TCPHandlerP.ServerList -> ServerListC;
+    TCPP.ServerList -> ServerListC;
 
     components new ListC(pack, (SOCKET_BUFFER_SIZE / PACKET_SIZE) * 10) as CurrentMessagesC;
-    TCPHandlerP.CurrentMessages -> CurrentMessagesC;
+    TCPP.CurrentMessages -> CurrentMessagesC;
 
 
 }

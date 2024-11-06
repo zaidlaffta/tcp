@@ -1,8 +1,8 @@
 #include "../../includes/packet.h"
 #include "../../includes/packet_id.h"
 
-module FloodingHandlerP {
-    provides interface FloodingHandler;
+module FloodingP {
+    provides interface Flooding;
 
     uses interface SimpleSend as Sender;
     uses interface List<packID> as PreviousPackets;
@@ -42,7 +42,7 @@ implementation {
         call Sender.send(*msg, AM_BROADCAST_ADDR);
     }
 
-    command void FloodingHandler.flood(pack* msg) {
+    command void Flooding.flood(pack* msg) {
         if (isValid(msg)) {
             packID packetID;
             packetID.src = msg->src;
