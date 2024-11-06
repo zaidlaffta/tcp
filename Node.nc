@@ -213,6 +213,7 @@ implementation{
     event void CommandHandler.closeClient(uint16_t dest, uint16_t srcPort, uint16_t destPort) {
         dbg(GENERAL_CHANNEL, "CLOSE_CLIENT EVENT\n");
         call TCP.closeClient(dest, srcPort, destPort);
+        dbg(GENERAL_CHANNEL, "client have been closed \n");
     }
 
     event void CommandHandler.setAppServer(){ dbg(GENERAL_CHANNEL, "setAppServer\n"); }
