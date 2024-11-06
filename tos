@@ -1,0 +1,7 @@
+#!/bin/bash
+
+# Author: Jadon Hansell
+# Email: jhansell@ucmerced.edu
+# Enters the tinyos image (bash) using Docker, with the current directory mounted at /app
+
+sudo docker run -v "$(pwd)":/app --rm -ti -w "/app" ucmercedandeslab/tinyos_debian

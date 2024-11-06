@@ -1,0 +1,7 @@
+#!/bin/bash
+
+# Author: Jadon Hansell
+# Email: jhansell@ucmerced.edu
+# Builds the tinyos projet located in the current directory using Docker
+
+sudo docker run -v "$(pwd)":/app --rm -w "/app" ucmercedandeslab/tinyos_debian make micaz sim
