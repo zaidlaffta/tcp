@@ -1,11 +1,4 @@
-/*
-* ANDES Lab - University of California, Merced
-* This class provides the basic functions of a network node.
-*
-* @author UCM ANDES Lab
-* @date   2013/09/03
-*
-*/
+
 #include <Timer.h>
 #include "includes/command.h"
 #include "includes/packet.h"
@@ -47,10 +40,7 @@ implementation{
     uint32_t randNum(uint32_t min, uint32_t max);
     uint16_t getSequence();
 
-    /**
-     * Called when the node is started
-     * Initializes/starts necessary services
-     */
+   
     event void Boot.booted(){
         call AMControl.start();
         call NeighborTimer.startPeriodic( randNum(10000, 20000) );
@@ -73,11 +63,6 @@ implementation{
 
     event void AMControl.stopDone(error_t err){}
 
-    /**
-     * Helper function for processing ping packets
-     * Only protocols needed are ping and ping reply
-     */
-    // TODO: Move to protocol handler module
     void pingHandler(pack* msg) {
         switch(msg->protocol) {
             case PROTOCOL_PING:
@@ -97,10 +82,7 @@ implementation{
         }
     }
 
-    /**
-     * Called when a packet is recieved
-     * Handles the validation of recieved packets, and identifies the type of packet
-     */
+    
     event message_t* Receive.receive(message_t* msg, void* payload, uint8_t len){
 
         if (len == sizeof(pack)) {
@@ -137,17 +119,11 @@ implementation{
         return msg;
     }
 
-    /**
-     * Runs neighbor discovery at a random time between 1 and 2 seconds
-     * Neighbor discovery only needs the node's current sequence number
-     */
+ 
     event void NeighborTimer.fired() {
         call NeighborDiscoveryHandler.discover();
     }
 
-    /**
-     * Starts routing process and keeps neighbor list up to date for the router
-     */
     event void RoutingTimer.fired() {
         uint32_t* neighbors = call NeighborDiscoveryHandler.getNeighbors();
         uint16_t numNeighbors = call NeighborDiscoveryHandler.numNeighbors();
@@ -156,9 +132,6 @@ implementation{
         call RoutingHandler.start();
     }
 
-    /**
-     * Sends TCP packet through the routing handler
-     */
     event void TCPHandler.route(pack* msg) {
         call RoutingHandler.send(msg);
     }
@@ -172,20 +145,11 @@ implementation{
         return getSequence();
     }
 
-    /**
-     * Called when the routing handler needs the sequence number for a packet
-     *
-     * @return the current sequence number
-     */
+
     event uint16_t RoutingHandler.getSequence() {
         return getSequence();
     }
 
-    /**
-     * Called when the TCP handler needs the sequence number for a packet
-     *
-     * @return the current sequence number
-     */
     event uint16_t TCPHandler.getSequence() {
         return getSequence();
     }
