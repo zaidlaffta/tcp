@@ -20,15 +20,15 @@ def perform_client_server_test(sim):
     """Conducts server setup and client-server data transfer test."""
     try:
         # Set up the server
-        sim.testServer(address=7, port=443)
+        sim.testServer(address=7, port=80)
         sim.runTime(5)
 
         # Client initiates data transfer to the server
-        sim.testClient(clientAddress=3, dest=7, srcPort=20, destPort=443, transfer=12)
+        sim.testClient(clientAddress=3, dest=7, srcPort=20, destPort=80, transfer=12)
         sim.runTime(10)
 
         # Close the client connection
-        sim.closeClient(clientAddress=3, dest=7, srcPort=20, destPort=443)
+        sim.closeClient(clientAddress=3, dest=7, srcPort=20, destPort=80)
         sim.runTime(10)
     except Exception as e:
         print("An error occurred during client-server testing: {}".format(e))
