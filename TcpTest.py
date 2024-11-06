@@ -31,7 +31,7 @@ def perform_client_server_test(sim):
         sim.closeClient(clientAddress=2, dest=9, srcPort=20, destPort=33)
         sim.runTime(10)
     except Exception as e:
-        print(f"An error occurred during client-server testing: {e}")
+        print("An error occurred during client-server testing: {}".format(e))
 
 def main():
     sim = setup_simulation()  # Initialize simulation setup
