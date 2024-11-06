@@ -17,10 +17,10 @@ module TCPP {
 implementation {
     /* SECTION: Member Variables */
 
-    socket_t next_fd = 1; /** Next open file descriptor to bind a socket to */
-    uint16_t* node_seq; /** Pointer to node's sequence number */
-    const uint16_t default_rtt = 1000; /** The default RTT for the sockets */
-    uint8_t temp_buffer[TCP_PAYLOAD_SIZE]; /** Temporary buffer for storing message data */
+    socket_t next_fd = 1; 
+    uint16_t* node_seq; 
+    const uint16_t default_rtt = 1000; 
+    uint8_t temp_buffer[TCP_PAYLOAD_SIZE]; 
 
     /* SECTION: Prototypes */
 
@@ -459,7 +459,7 @@ implementation {
         updateSocket(socketFD, socket);
         sendSyn(socketFD);
 
-        dbg(TRANSPORT_CHANNEL, "Client started on Port %hhu with destination %hu: %hhu\n", srcPort, dest, destPort);
+        dbg(TRANSPORT_CHANNEL, "Client started on Port source %hhu with destination node of %hu: and destination port of %hhu\n", srcPort, dest, destPort);
         dbg(TRANSPORT_CHANNEL, "Transferring %hu bytes to destination...\n", transfer);
     }
 
