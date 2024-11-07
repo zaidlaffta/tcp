@@ -165,7 +165,8 @@ implementation {
         call SocketMap.insert(socketFD, socket);
     }
 
- 
+     ////////////////////////////////// update Socket /////////////////////////////////
+    // Updates socket, technically creating a new socket
     void updateSocket(socket_t socketFD, socket_store_t new_socket) {
         if (!socketFD) {
             dbg(TRANSPORT_CHANNEL, "[Error] updateSocket: Invalid socket descriptor\n");
@@ -175,7 +176,8 @@ implementation {
         call SocketMap.insert(socketFD, new_socket);
     }
 
-
+    ////////////////////////////////// TCP ACK /////////////////////////////////
+    // create an ACK 
     bool isAcked(socket_t socketFD, uint16_t seq) {
         socket_store_t socket;
 
@@ -192,14 +194,16 @@ implementation {
                 || socket.state == CLOSED;
         }
 
-        if (socket.lastAck < socket.lastSent) { // Normal Case
+        if (socket.lastAck < socket.lastSent) { 
             return seq > socket.lastSent || seq <= socket.lastAck;
         }
-        else { // Wraparound
+        else { 
             return seq > socket.lastSent && seq <= socket.lastAck;
         }
     }
 
+////////////////////// Read Sequ. number /////////////////////////
+// Function to check if a sequence number has been read
 
     bool isRead(socket_t socketFD, uint16_t seq) {
         socket_store_t socket;
@@ -211,18 +215,20 @@ implementation {
 
         socket = call SocketMap.get(socketFD);
 
-        if (socket.lastRcvd < socket.lastRead) { // Normal Case
+        if (socket.lastRcvd < socket.lastRead) { 
             return seq >= socket.lastRead || seq < socket.lastRcvd;
         }
-        else { // Wraparound
+        else { 
             return seq >= socket.lastRead && seq < socket.lastRcvd;
         }
     }
 
+////////////////////// Check sequ.written////////////////////////////
+// Function to check if a sequence number has been written
 
     bool isWritten(socket_t socketFD, uint16_t seq) {
         socket_store_t socket;
-
+    // Check if the socket file descriptor is valid
         if (!socketFD) {
             dbg(TRANSPORT_CHANNEL, "[Error] isWritten: Invalid file descriptor\n");
             return FALSE;
@@ -238,6 +244,8 @@ implementation {
         }
     }
 
+///////////////////////////// write to socket ///////////////////////
+// Function to write a message to a socket
 
     void write(socket_t socketFD, pack* msg) {
         socket_store_t socket;
@@ -251,11 +259,14 @@ implementation {
         sendNextFromSocket(socketFD);             
     }
 
-  
+  ///////////////////////// Full socket with data ////////////////////
+  // Function to fill the socket's send buffer with data
+
     uint8_t fill(socket_store_t* socket, uint32_t transfer) {
         uint32_t i;
         uint8_t count;
 
+        // Reset lastWritten if it exceeds the buffer size
         if (socket->lastWritten >= SOCKET_BUFFER_SIZE) {
             socket->lastWritten = 0;
         }
@@ -264,7 +275,7 @@ implementation {
             if(socket->flag == 0) {
                 return 0;
             }
-
+             // Calculate transfer amount and initial count based on the send buffer and flag
             transfer = socket->sendBuff[socket->lastWritten] + socket->flag;
             count = socket->sendBuff[socket->lastWritten];
         } else {
@@ -279,7 +290,7 @@ implementation {
                 offset = 0;
             }
 
-
+             // Check if the next position in the buffer is available
             if (socket->lastWritten + 1 < SOCKET_BUFFER_SIZE) {
                 if (socket->lastWritten + 1 != socket->lastSent) {
                     socket->sendBuff[offset] = count;
@@ -400,16 +411,20 @@ implementation {
         call PacketTimer.startOneShot(call PacketTimer.getNow() + 2*socket.RTT);
     }
 
-  
+
+////////////////////////////////// remove Ack  /////////////////////////////////
+// Function to remove an acknowledged packet from the current messages list
     void removeAck(tcp_header ack_header) {
         uint16_t i;
         uint16_t size = call CurrentMessages.size();
 
+    // Loop through the current messages to find the matching ACK
         for (i = 0; i < size; i++) {
             pack tempPack = call CurrentMessages.get(i);
             tcp_header tempHeader;
             memcpy(&tempHeader, &tempPack.payload, PACKET_MAX_PAYLOAD_SIZE);
-
+            
+            // Check if the sequence number and destination port match the ACK header
             if (tempHeader.seq == ack_header.seq &&
                 tempHeader.dest_port == ack_header.src_port) {
                     call CurrentMessages.remove(i);
