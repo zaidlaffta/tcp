@@ -178,7 +178,7 @@ implementation {
     ////////////////////////////////// CommandHandler.closeClient /////////////////////////////////
     // Closes a TCP client connection to a specified destination and port
     event void CommandHandler.closeClient(uint16_t dest, uint16_t srcPort, uint16_t destPort) {
-        dbg(GENERAL_CHANNEL, "CLOSE_CLIENT EVENT\n");
+       // dbg(GENERAL_CHANNEL, "CLOSE_CLIENT EVENT\n");
         call TCP.closeClient(dest, srcPort, destPort);
         dbg(GENERAL_CHANNEL, "Client has been closed \n");
     }
