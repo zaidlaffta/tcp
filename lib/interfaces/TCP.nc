@@ -7,4 +7,6 @@ interface TCP {
     command void recieve(pack* msg);
     event void route(pack* msg);
     event uint16_t getSequence();
+    
+    event void sendCustomData(socket_t socketFD);
 }
