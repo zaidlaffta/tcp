@@ -22,8 +22,8 @@ implementation {
     const uint16_t default_rtt = 1000; 
     uint8_t temp_buffer[TCP_PAYLOAD_SIZE]; 
 
-    uint8_t myData[] = "Hello, TinyOS!";
-    uint16_t dataSize = sizeof(myData) - 1;  // Exclude the null terminator
+    //uint8_t myData[] = "Hello, TinyOS!";
+   // uint16_t dataSize = sizeof(myData) - 1;  // Exclude the null terminator
 
 
     /* SECTION: Prototypes */
