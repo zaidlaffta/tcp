@@ -511,7 +511,7 @@ implementation {
             logPack(msg);
             logHeader(&header);
             dbg(TRANSPORT_CHANNEL, "--------- Socket ----------\n");
-            //logSocket(&socket);
+            logSocket(&socket);
             dbg(TRANSPORT_CHANNEL, "---------------------------\n\n");
         
 
@@ -563,7 +563,7 @@ implementation {
                         socket.lastRcvd += header.payload_size;
                     }
                     for (i = 0; i < header.payload_size; i++) {
-                        dbg(GENERAL_CHANNEL, "%hhu,\n", header.payload[i]);
+                       // dbg(GENERAL_CHANNEL, "%hhu,\n", header.payload[i]);
                     }
 
                     updateSocket(socketFD, socket);
