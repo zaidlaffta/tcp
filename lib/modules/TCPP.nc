@@ -429,7 +429,7 @@ implementation {
         socket.RTT = default_rtt;
 
         call ServerList.pushbackdrop(socket);
-        dbg(TRANSPORT_CHANNEL, "Server started on Port %hhu\n", port);
+        dbg(TRANSPORT_CHANNEL, "Server started, it is waiting for connction on Port %hhu\n", port);
     }
 
  
