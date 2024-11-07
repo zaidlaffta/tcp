@@ -19,7 +19,7 @@ implementation {
     socket_t next_fd = 1;   //next available file dicripter
     uint16_t* node_seq;     //Node sequence number 
     const uint16_t default_rtt = 200;    //default rount trip time
-    uint8_t temp_buffer[TCP_PAYLOAD_SIZE]; 
+    uint8_t temp_buffer[TCP_PAYLOAD_SIZE]; // buffer to store payload
 
     //uint8_t myData[] = "Hello, TinyOS!";
    // uint16_t dataSize = sizeof(myData) - 1;  // Exclude the null terminator
@@ -42,7 +42,8 @@ implementation {
     void updateSocket(socket_t socketFD, socket_store_t new_socket);
     void getState(enum socket_state state, char* str);
 
- 
+     ////////////////////////////////// getNextFD /////////////////////////////////
+    // Finds the next available file descriptor for a new socket
     socket_t getNextFD() {
         uint32_t* fds = call SocketMap.getKeys(); 
         uint16_t size = call SocketMap.size();
@@ -58,6 +59,7 @@ implementation {
             }
 
             if (!found) {
+                //return available file discripter
                 return fd;
             }      
         }
@@ -66,12 +68,14 @@ implementation {
         return 0;
     }
 
-  
+    ////////////////////////////////// getFD /////////////////////////////////
+    // Retrieves the socket file descriptor for a given destination and port
     socket_t getFD(uint16_t dest, uint16_t srcPort, uint16_t destPort) {
         uint32_t* fds = call SocketMap.getKeys();
         uint16_t size = call SocketMap.size();
         uint16_t i;
 
+        // Loop through existing sockets to find a match
         for (i = 0; i < size; i++) {
             socket_t socketFD = fds[i];
             socket_store_t socket = call SocketMap.get(socketFD);
@@ -84,12 +88,11 @@ implementation {
         }
 
         dbg(TRANSPORT_CHANNEL, "[Error] getFD: File descriptor not found for dest: %hu, srcPort: %hhu, destPort: %hhu\n", dest, srcPort, destPort);
-        
-        
         return 0;
     }
 
- 
+    ////////////////////////////////// State of the socket /////////////////////////////////
+    // what is the sate of the socket using switch statement
     void getState(enum socket_state state, char* str) {
         switch(state) {
             case CLOSED:
@@ -113,6 +116,8 @@ implementation {
     }
 
  
+    ////////////////////////////////// connect /////////////////////////////////
+    // Establishes a connection to the specified destination and port
     socket_t connect(uint16_t dest, uint16_t srcPort, uint16_t destPort) {
         uint16_t size = call ServerList.size();
         uint16_t i;
@@ -130,19 +135,23 @@ implementation {
                     return addSocket(new_socket);
             }
         }
-
+        // No server socket found
         return 0;
     }
 
-  
+    ////////////////////////////////// addSocket /////////////////////////////////
+    // Adds a new socket to the SocketMap and assigns a file descriptor  
     socket_t addSocket(socket_store_t socket) {
         socket_t fd = next_fd;
-        call SocketMap.insert(next_fd, socket);
+        //insert socket into map
+        call SocketMap.insert(next_fd, socket); 
+        //get next available file discripter
         next_fd = getNextFD();
         return fd;
     }
 
-
+    ////////////////////////////////// updateState /////////////////////////////////
+    // Updates the state of an existing socket
     void updateState(socket_t socketFD, enum socket_state new_state) {
         socket_store_t socket;
 
@@ -326,7 +335,7 @@ implementation {
         updateSocket(socketFD, socket);
     }
 
- 
+
     void sendNextFromSocket(socket_t socketFD) {
         pack packet;
         tcp_header header;
@@ -347,7 +356,8 @@ implementation {
         call PacketTimer.startOneShot(call PacketTimer.getNow() + 2*socket.RTT);
     }
 
-  
+    ////////////////////////////////// sendNextData /////////////////////////////////
+    // Prepares the next data packet for transmission   
     void sendNextData(socket_t socketFD) {
         pack packet;
         tcp_header header;
@@ -479,17 +489,15 @@ implementation {
 
  
     command void TCP.recieve(pack* msg) {
-        // FIXME: Instantly add msg into recieve buffer, more messages may be waiting
                                     
         socket_t socketFD;
         socket_store_t socket;
         tcp_header header;
         char dbg_string[20];
         uint16_t i;
-        uint16_t x;  // Declare at the start
+        uint16_t x;  
 
         
-        // Retrieve TCP header from packet
         memcpy(&header, &(msg->payload), PACKET_MAX_PAYLOAD_SIZE);
 
         if (header.flag == SYN) {
@@ -505,7 +513,6 @@ implementation {
 
         socket = call SocketMap.get(socketFD);
 
-        // if(header.flag != DAT) {
             dbg(TRANSPORT_CHANNEL, "--- TCP Packet recieved ---\n");
             logPack(msg);
             logHeader(&header);
@@ -571,7 +578,6 @@ implementation {
                 else if (header.flag == ACK) {
                     call PacketTimer.stop();
                     removeAck(header);
-                    // TODO: Update RTT
                     fill(&socket, 0);
                     socket.nextExpected = header.seq+1;
                     updateSocket(socketFD, socket);
@@ -652,7 +658,6 @@ implementation {
 
         socket = call SocketMap.get(socketFD);
 
-        // Packed was acked, send the next one
         while(isAcked(socketFD, header.seq)) {
             call CurrentMessages.remove(0);
             if (call CurrentMessages.isEmpty()) {
@@ -721,7 +726,6 @@ implementation {
 
         socket = call SocketMap.get(socketFD);
 
-        // Retrieve the TCP header from the original message
         memcpy(&originalHeader, &(original_message->payload), PACKET_MAX_PAYLOAD_SIZE);
 
         ackPack.src = TOS_NODE_ID;
@@ -732,13 +736,12 @@ implementation {
 
         ackHeader.src_port = socket.src;
         ackHeader.dest_port = socket.dest.port;
-        ackHeader.seq = originalHeader.seq; // REVIEW: Maybe not the correct value
+        ackHeader.seq = originalHeader.seq; 
         ackHeader.advert_window = socket.effectiveWindow;
         ackHeader.flag = ACK;
         ackHeader.payload_size = 0;
         memset(&ackHeader.payload, '\0', TCP_PAYLOAD_SIZE);
 
-        // Insert the ackHeader into the packet
         memcpy(&ackPack.payload, &ackHeader, PACKET_MAX_PAYLOAD_SIZE);
         
         signal TCP.route(&ackPack);
@@ -812,7 +815,8 @@ implementation {
         write(socketFD, &datPack);
        
     } 
-
+/////////////////////// functio nto change the data send /////////////////////
+// we can send custom data using the following function
    void sendCustomData(socket_t socketFD) {
     // Define custom data payload
     uint8_t myData[] = "This is the data I want to send over TCP!";
