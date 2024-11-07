@@ -91,7 +91,8 @@ implementation {
             if (myMsg->protocol == PROTOCOL_DV) {
                 call Routing.recieve(myMsg);
             } else if (myMsg->protocol == PROTOCOL_TCP && myMsg->dest == TOS_NODE_ID) {
-                call TCP.recieve(myMsg);
+               // call TCP.recieve(myMsg);
+               call TCP.receive(myMsg);
             } else if (myMsg->dest == TOS_NODE_ID) {
                 pingHandler(myMsg); // Handle as ping
             } else if (myMsg->dest == AM_BROADCAST_ADDR) {
