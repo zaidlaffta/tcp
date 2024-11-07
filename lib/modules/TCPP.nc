@@ -771,7 +771,7 @@ implementation {
         write(socketFD, &finPack);                
     }
 
-
+/*
     void sendDat(socket_t socketFD, uint8_t* data, uint16_t size) {
         socket_store_t socket;
         pack datPack;
@@ -807,5 +807,46 @@ implementation {
         memcpy(&datPack.payload, &dat_header, TCP_PAYLOAD_SIZE);
 
         write(socketFD, &datPack);
-    } 
+    } */
+
+    void sendDat(socket_t socketFD, uint8_t* data, uint16_t size) {
+    socket_store_t socket;
+    pack datPack;
+    tcp_header dat_header;
+
+    if (!socketFD) {
+        dbg(TRANSPORT_CHANNEL, "[Error] sendDat: Invalid file descriptor\n");
+        return;
+    }
+
+    // Retrieve the socket information associated with this file descriptor
+    socket = call SocketMap.get(socketFD);
+
+    // Set up the `datPack` fields for transmission
+    datPack.src = TOS_NODE_ID;
+    datPack.dest = socket.dest.addr;
+    datPack.seq = signal TCP.getSequence();
+    datPack.TTL = MAX_TTL;
+    datPack.protocol = PROTOCOL_TCP;
+
+    // Configure the TCP header for the data packet
+    dat_header.src_port = socket.src;
+    dat_header.dest_port = socket.dest.port;
+    dat_header.flag = DAT;                  // Set to Data flag
+    dat_header.seq = socket.nextExpected;   // Sequence number
+    dat_header.advert_window = socket.effectiveWindow;
+    dat_header.payload_size = size;
+
+    // Copy the user-provided data into the TCP header's payload section
+    for (uint16_t i = 0; i < size && i < TCP_PAYLOAD_SIZE; i++) {
+        dat_header.payload[i] = data[i];
+    }
+
+    // Copy the configured TCP header into the packet payload
+    memcpy(&datPack.payload, &dat_header, sizeof(tcp_header));
+
+    // Send the data packet by writing it to the socket
+    write(socketFD, &datPack);
+}
+
 }
