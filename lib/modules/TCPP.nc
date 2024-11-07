@@ -423,7 +423,7 @@ implementation {
             pack tempPack = call CurrentMessages.get(i);
             tcp_header tempHeader;
             memcpy(&tempHeader, &tempPack.payload, PACKET_MAX_PAYLOAD_SIZE);
-            
+
             // Check if the sequence number and destination port match the ACK header
             if (tempHeader.seq == ack_header.seq &&
                 tempHeader.dest_port == ack_header.src_port) {
@@ -433,15 +433,19 @@ implementation {
         }
     }
     
+///////////////////// create tcp server ////////////////////////
+// Command to start a TCP server on a specified port
 
     command void TCP.startServer(uint16_t port) {
         uint16_t num_connections = call SocketMap.size();
         socket_store_t socket;
 
+        // Check if the maximum number of sockets has been reached
         if (num_connections == MAX_NUM_OF_SOCKETS) {
             dbg(TRANSPORT_CHANNEL, "[Error] startServer: Cannot create server at Port %hhu: Max num of sockets reached\n", port);
         }
 
+        // Initialize the socket with the specified port and default values
         socket.src = port;
         socket.state = LISTEN;
         socket.dest.addr = ROOT_SOCKET_ADDR;
@@ -453,18 +457,20 @@ implementation {
         socket.effectiveWindow = 1;
         socket.flag = 0;
         socket.RTT = default_rtt;
-
+        // Add the socket to the server list
         call ServerList.pushbackdrop(socket);
         dbg(TRANSPORT_CHANNEL, "Server started, it is waiting for connction on Port %hhu\n", port);
     }
 
  
+ // Command to start a TCP client to connect to a specified destination and port
     command void TCP.startClient(uint16_t dest, uint16_t srcPort,
                                         uint16_t destPort, uint16_t transfer) {
         socket_store_t socket;
         socket_t socketFD;
         uint16_t i;
 
+        // Initialize the socket with the specified source and destination details
         socket.src = srcPort;
         socket.dest.port = destPort;
         socket.dest.addr = dest;
@@ -479,6 +485,7 @@ implementation {
         socket.nextExpected = 0;
         memset(socket.sendBuff, '\0', SOCKET_BUFFER_SIZE);
 
+        // Fill the socket's send buffer with the transfer data
         fill(&socket, transfer);
         socketFD = addSocket(socket);
 
@@ -489,7 +496,8 @@ implementation {
         dbg(TRANSPORT_CHANNEL, "Transferring %hu bytes to destination...\n", transfer);
     }
 
-  
+///////////////////// shutdown clinet side ////////////////////////
+// Function to close TCP client  
     command void TCP.closeClient(uint16_t dest, uint16_t srcPort, uint16_t destPort) {
         socket_t socketFD = getFD(dest, srcPort, destPort);
         dbg(TRANSPORT_CHANNEL, "Closing client on Port %hhu with destination %hu: %hhu\n", srcPort, dest, destPort);
@@ -502,7 +510,7 @@ implementation {
         updateState(socketFD, CLOSED);
     }
 
- 
+ /*
     command void TCP.recieve(pack* msg) {
                                     
         socket_t socketFD;
@@ -646,7 +654,36 @@ implementation {
                 getState(socket.state, dbg_string);
                 dbg(TRANSPORT_CHANNEL, "[Error] recieve: Invalid socket state %s\n", dbg_string);
         }
+    }*/
+// Command to receive a TCP packet and process it
+command void TCP.receive(pack* msg) {
+    socket_t socketFD;
+    socket_store_t socket;
+    tcp_header header;
+    char dbg_string[20];
+    uint16_t i;
+
+    // Copy the TCP header from the message payload
+    memcpy(&header, &(msg->payload), PACKET_MAX_PAYLOAD_SIZE);
+
+    // Handle SYN flag to establish a connection
+    if (header.flag == SYN) {
+        connect(msg->src, header.dest_port, header.src_port);
     }
+
+    // Retrieve the socket file descriptor for the message source and ports
+    socketFD = getFD(msg->src, header.dest_port, header.src_port);
+
+    if (!socketFD) {
+        dbg(TRANSPORT_CHANNEL, "[Error] receive: No socket associated with message from Node %hu\n", msg->src);
+        return;
+    }
+
+    // Retrieve the socket information from the SocketMap
+    socket = call SocketMap.get(socketFD);
+
+    // Print the received packet details
+    dbg(TRANSPORT_CHANNEL, "--- TCP Packet received ---\n");
 
    
     event void PacketTimer.fired(){
