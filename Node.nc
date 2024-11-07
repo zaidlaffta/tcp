@@ -155,14 +155,14 @@ implementation {
     event void CommandHandler.printLinkState() { dbg(GENERAL_CHANNEL, "printLinkState\n"); }
 
     ////////////////////////////////// CommandHandler.printDistanceVector /////////////////////////////////
-    // Outputs link state routing 
+    // Not in use as of right now!!!!!
     event void CommandHandler.printDistanceVector() {
     }
 
     ////////////////////////////////// CommandHandler.setTestServer /////////////////////////////////
     // Sets up a TCP server socket for incoming connections on the specified port
     event void CommandHandler.setTestServer(uint16_t port) {
-        dbg(GENERAL_CHANNEL, "TEST_SERVER EVENT\n");
+        dbg(GENERAL_CHANNEL, "Spinning out a server for the TCP connection\n");
         call TCP.startServer(port);
     }
 
@@ -170,7 +170,7 @@ implementation {
     // Initiates a TCP client connection to the specified destination and port
     event void CommandHandler.setTestClient(uint16_t dest, uint16_t srcPort, 
                                             uint16_t destPort, uint16_t transfer) {
-        dbg(GENERAL_CHANNEL, "TEST_CLIENT EVENT\n");
+        dbg(GENERAL_CHANNEL, "Spinning out client for the TCP connection \n");
         call TCP.startClient(dest, srcPort, destPort, transfer);
     }
 
@@ -182,8 +182,8 @@ implementation {
         dbg(GENERAL_CHANNEL, "Client has been closed \n");
     }
 
-    event void CommandHandler.setAppServer() { dbg(GENERAL_CHANNEL, "setAppServer\n"); }
-    event void CommandHandler.setAppClient() { dbg(GENERAL_CHANNEL, "setAppClient\n"); }
+    event void CommandHandler.setAppServer() { }
+    event void CommandHandler.setAppClient() { }
 
     ////////////////////////////////// makePack /////////////////////////////////
     // Assembles a packet structure from the provided parameters
