@@ -655,35 +655,165 @@ implementation {
                 dbg(TRANSPORT_CHANNEL, "[Error] recieve: Invalid socket state %s\n", dbg_string);
         }
     }*/
-// Command to receive a TCP packet and process it
-command void TCP.receive(pack* msg) {
+
+    command void TCP.receive(pack* msg) {
     socket_t socketFD;
     socket_store_t socket;
     tcp_header header;
     char dbg_string[20];
     uint16_t i;
+    uint16_t x;
 
-    // Copy the TCP header from the message payload
+    // Copy the TCP header from the packet payload
     memcpy(&header, &(msg->payload), PACKET_MAX_PAYLOAD_SIZE);
 
-    // Handle SYN flag to establish a connection
+    // If SYN flag is set, attempt connection
     if (header.flag == SYN) {
         connect(msg->src, header.dest_port, header.src_port);
     }
 
-    // Retrieve the socket file descriptor for the message source and ports
+    // Retrieve socket file descriptor based on message source and destination ports
     socketFD = getFD(msg->src, header.dest_port, header.src_port);
 
+    // Check if there’s an associated socket, else log an error and exit
     if (!socketFD) {
         dbg(TRANSPORT_CHANNEL, "[Error] receive: No socket associated with message from Node %hu\n", msg->src);
         return;
     }
 
-    // Retrieve the socket information from the SocketMap
+    // Retrieve socket information
     socket = call SocketMap.get(socketFD);
 
-    // Print the received packet details
+    // Log packet details and socket information
     dbg(TRANSPORT_CHANNEL, "--- TCP Packet received ---\n");
+    logPack(msg);
+    logHeader(&header);
+    dbg(TRANSPORT_CHANNEL, "--------- Socket ----------\n");
+    logSocket(&socket);
+    dbg(TRANSPORT_CHANNEL, "---------------------------\n\n");
+
+    // Handle packet based on socket state
+    switch(socket.state) {
+        case CLOSED:
+            // If FIN flag is received in CLOSED state, acknowledge and close the socket
+            if (header.flag == FIN) {
+                sendAck(socketFD, msg);
+                call SocketMap.remove(socketFD);
+            }
+            break;
+
+        case LISTEN:
+            // If SYN flag is received in LISTEN state, initiate connection
+            if (header.flag == SYN){  
+                sendSyn(socketFD);
+                sendAck(socketFD, msg);
+                updateState(socketFD, SYN_RCVD);
+            }
+            break;
+
+        case ESTABLISHED:
+            if (header.flag == DAT) {
+                // Check if the data is already acknowledged
+                if (isAcked(socketFD, header.seq)) {
+                    break;
+                }
+                // Send an acknowledgment for the data
+                sendAck(socketFD, msg);
+
+                // Process received data and update buffer
+                if (socket.lastRcvd >= SOCKET_BUFFER_SIZE) {
+                    for (i = 0; i < header.payload_size; i++) {
+                        socket.rcvdBuff[i] = header.payload[i];
+                    }
+                    socket.lastRcvd = header.payload_size;
+                }
+                else if (socket.lastRcvd + header.payload_size >= SOCKET_BUFFER_SIZE) {
+                    uint16_t extra = socket.lastRcvd + header.payload_size - SOCKET_BUFFER_SIZE;
+                    for (i = 0; i < header.payload_size - extra; i++) {
+                        socket.rcvdBuff[socket.lastRcvd + i] = header.payload[i];
+                    }
+                    for (i = 0; i < extra; i++) {
+                        socket.rcvdBuff[i] = header.payload[header.payload_size-extra-i];
+                    }
+                    socket.lastRcvd = extra;
+                } 
+                else {
+                    for (i = 0; i < header.payload_size; i++) {
+                        socket.rcvdBuff[socket.lastRcvd+i] = header.payload[i];
+                    }
+                    socket.lastRcvd += header.payload_size;
+                }
+
+                // Print each byte of received data in a more readable format
+                dbg(GENERAL_CHANNEL, "Received data in hex format:\n");
+                for (i = 0; i < header.payload_size; i++) {
+                    dbg(GENERAL_CHANNEL, "0x%02X ", header.payload[i]);
+                    if ((i + 1) % 8 == 0) {  // Print 8 bytes per line
+                        dbg(GENERAL_CHANNEL, "\n");
+                    }
+                }
+                dbg(GENERAL_CHANNEL, "\n");
+
+                updateSocket(socketFD, socket);
+                printUnread(socketFD);
+            }
+            else if (header.flag == ACK) {
+                call PacketTimer.stop();
+                removeAck(header);
+                fill(&socket, 0);
+                socket.nextExpected = header.seq+1;
+                updateSocket(socketFD, socket);
+                sendNextData(socketFD);
+            }
+            else if (header.flag == FIN) {
+                sendAck(socketFD, msg);
+                sendFin(socketFD);
+                updateState(socketFD, CLOSED);
+            }
+            break;
+
+        case SYN_SENT:
+            if (header.flag == ACK) {
+                updateState(socketFD, ESTABLISHED);
+                call PacketTimer.stop();
+                removeAck(header);
+                sendNextData(socketFD);
+            }
+            else if (header.flag == SYN) {
+                sendAck(socketFD, msg);
+            }
+            else if (header.flag == DAT) {
+                updateState(socketFD, ESTABLISHED);
+                call TCP.receive(msg);
+                break;
+            }
+            else {
+                dbg(TRANSPORT_CHANNEL, "[Error] receive: Invalid packet type for SYN_SENT state\n");
+            }
+            break;
+
+        case SYN_RCVD:
+            if (header.flag == ACK) {   
+                updateState(socketFD, ESTABLISHED);
+                call PacketTimer.stop();
+                removeAck(header);
+            }
+            else if (header.flag == DAT) {
+                updateState(socketFD, ESTABLISHED);
+                call TCP.receive(msg);
+                break;
+            }
+            else {
+                dbg(TRANSPORT_CHANNEL, "[Error] receive: Invalid packet type for SYN_RCVD state\n");
+            }
+            break;
+
+        default:
+            getState(socket.state, dbg_string);
+            dbg(TRANSPORT_CHANNEL, "[Error] receive: Invalid socket state %s\n", dbg_string);
+    }
+}
+
 
    
     event void PacketTimer.fired(){
