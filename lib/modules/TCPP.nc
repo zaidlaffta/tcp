@@ -565,13 +565,7 @@ implementation {
                         socket.lastRcvd += header.payload_size;
                     }
                     for (i = 0; i < header.payload_size; i++) {
-                        dbg(GENERAL_CHANNEL, "Received Data: ");
-                        for (x = x; x < header.payload_size; x++) {
-                            dbg(GENERAL_CHANNEL, "%hhu, ", header.payload[i]);
-                        }
-                        dbg(GENERAL_CHANNEL, "\n");  // End the line after all data is printed
-
-                       // dbg(GENERAL_CHANNEL, "%hhu,\n", header.payload[i]);
+                     dbg(GENERAL_CHANNEL, "%hhu,\n", header.payload[i]);
                     }
 
                     updateSocket(socketFD, socket);
