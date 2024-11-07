@@ -813,6 +813,7 @@ implementation {
     socket_store_t socket;
     pack datPack;
     tcp_header dat_header;
+    uint16_t i;
 
     if (!socketFD) {
         dbg(TRANSPORT_CHANNEL, "[Error] sendDat: Invalid file descriptor\n");
@@ -838,15 +839,16 @@ implementation {
     dat_header.payload_size = size;
 
     // Copy the user-provided data into the TCP header's payload section
-    for (uint16_t i = 0; i < size && i < TCP_PAYLOAD_SIZE; i++) {
+    for (i = 0; (i < size) && (i < TCP_PAYLOAD_SIZE); i++) {
         dat_header.payload[i] = data[i];
     }
 
     // Copy the configured TCP header into the packet payload
-    memcpy(&datPack.payload, &dat_header, sizeof(tcp_header));
+    memcpy((void *)&datPack.payload, (void *)&dat_header, sizeof(tcp_header));
 
     // Send the data packet by writing it to the socket
-    write(socketFD, &datPack);
+    call write(socketFD, &datPack);
 }
+
 
 }
