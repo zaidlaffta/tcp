@@ -510,151 +510,9 @@ implementation {
         updateState(socketFD, CLOSED);
     }
 
- /*
-    command void TCP.recieve(pack* msg) {
-                                    
-        socket_t socketFD;
-        socket_store_t socket;
-        tcp_header header;
-        char dbg_string[20];
-        uint16_t i;
-        uint16_t x;  
-
-        
-        memcpy(&header, &(msg->payload), PACKET_MAX_PAYLOAD_SIZE);
-
-        if (header.flag == SYN) {
-            connect(msg->src, header.dest_port, header.src_port);
-        }
-
-        socketFD = getFD(msg->src, header.dest_port, header.src_port);
-
-        if (!socketFD) {
-            dbg(TRANSPORT_CHANNEL, "[Error] recieve: No socket associated with message from Node %hu\n", msg->src);
-            return;
-        }
-
-        socket = call SocketMap.get(socketFD);
-
-            dbg(TRANSPORT_CHANNEL, "--- TCP Packet recieved ---\n");
-            logPack(msg);
-            logHeader(&header);
-            dbg(TRANSPORT_CHANNEL, "--------- Socket ----------\n");
-            logSocket(&socket);
-            dbg(TRANSPORT_CHANNEL, "---------------------------\n\n");
-        
-
-        switch(socket.state) {
-            case CLOSED:
-                if (header.flag == FIN) {
-                    sendAck(socketFD, msg);
-                    call SocketMap.remove(socketFD);
-                }      
-                break;
-
-            case LISTEN:
-                if (header.flag == SYN){  
-                    sendSyn(socketFD);
-                    sendAck(socketFD, msg);
-                    updateState(socketFD, SYN_RCVD);
-                }
-                break;
-
-            case ESTABLISHED:
-                if (header.flag == DAT) {
-                    if (isAcked(socketFD, header.seq)) {
-                        break;
-                    }
-                    sendAck(socketFD, msg);
-
-                    
-
-                    if (socket.lastRcvd >= SOCKET_BUFFER_SIZE) {
-                        for (i = 0; i < header.payload_size; i++) {
-                            socket.rcvdBuff[i] = header.payload[i];
-                        }
-                        socket.lastRcvd = header.payload_size;
-                    }
-                    else if (socket.lastRcvd + header.payload_size >= SOCKET_BUFFER_SIZE) {
-                        uint16_t extra = socket.lastRcvd + header.payload_size - SOCKET_BUFFER_SIZE;
-                        for (i = 0; i < header.payload_size - extra; i++) {
-                            socket.rcvdBuff[socket.lastRcvd + i] = header.payload[i];
-                        }
-                        for (i = 0; i < extra; i++) {
-                            socket.rcvdBuff[i] = header.payload[header.payload_size-extra-i];
-                        }
-                        socket.lastRcvd = extra;
-                    } 
-                    else {
-                        for (i = 0; i < header.payload_size; i++) {
-                            socket.rcvdBuff[socket.lastRcvd+i] = header.payload[i];
-                        }
-                        socket.lastRcvd += header.payload_size;
-                    }
-                    for (i = 0; i < header.payload_size; i++) {
-                     dbg(GENERAL_CHANNEL, "received data: %hhu,\n", header.payload[i]);
-                    }
-
-                    updateSocket(socketFD, socket);
-                    printUnread(socketFD);
-                }
-                else if (header.flag == ACK) {
-                    call PacketTimer.stop();
-                    removeAck(header);
-                    fill(&socket, 0);
-                    socket.nextExpected = header.seq+1;
-                    updateSocket(socketFD, socket);
-                    sendNextData(socketFD);
-                }
-                else if (header.flag == FIN) {
-                    sendAck(socketFD, msg);
-                    sendFin(socketFD);
-                    updateState(socketFD, CLOSED);
-                }
-                break;
-
-            case SYN_SENT:
-                
-                if (header.flag == ACK) {
-                    updateState(socketFD, ESTABLISHED);
-                    call PacketTimer.stop();
-                    removeAck(header);
-                    sendNextData(socketFD);
-                }
-                else if (header.flag == SYN) {
-                    sendAck(socketFD, msg);
-                }
-                else if (header.flag == DAT) {
-                    updateState(socketFD, ESTABLISHED);
-                    call TCP.recieve(msg);
-                    break;
-                }
-                else{
-                    dbg(TRANSPORT_CHANNEL, "[Error] recieve: Invalid packet type for SYN_SENT state\n");
-                }
-                break;
-
-            case SYN_RCVD:
-                if (header.flag == ACK) {   
-                    updateState(socketFD, ESTABLISHED);
-                    call PacketTimer.stop();
-                    removeAck(header);
-                }
-                else if (header.flag == DAT) {
-                    updateState(socketFD, ESTABLISHED);
-                    call TCP.recieve(msg);
-                    break;
-                }
-                else {
-                    dbg(TRANSPORT_CHANNEL, "[Error] recieve: Invalid packet type for SYN_RCVD state\n");
-                }
-                break;
-
-            default:
-                getState(socket.state, dbg_string);
-                dbg(TRANSPORT_CHANNEL, "[Error] recieve: Invalid socket state %s\n", dbg_string);
-        }
-    }*/
+////////////////////// THE MOST IMPORTANT FUNCTION IN THE CODE////////////////////
+///////////// Process received messages/////////////////
+// Once establish connection, this function will process recevied packets
 command void TCP.receive(pack* msg) {
     socket_t socketFD;
     socket_store_t socket;
@@ -684,14 +542,16 @@ command void TCP.receive(pack* msg) {
     socket = call SocketMap.get(socketFD);
 
     // Log packet details and socket information
-    dbg(TRANSPORT_CHANNEL, "--- TCP Packet received ---\n");
+    dbg(TRANSPORT_CHANNEL, "================== TCP Packet received ===============\n");
     logPack(msg);
     logHeader(&header);
-    dbg(TRANSPORT_CHANNEL, "--------- Socket ----------\n");
+    dbg(TRANSPORT_CHANNEL, "****************** Socket ********************\n");
     logSocket(&socket);
-    dbg(TRANSPORT_CHANNEL, "---------------------------\n\n");
+    dbg(TRANSPORT_CHANNEL, "------------------------------------------\n\n");
 
-    dbg(GENERAL_CHANNEL, "Processing received data...\n");
+    dbg(GENERAL_CHANNEL, "==============================\n");
+    dbg(GENERAL_CHANNEL, "|   Processing received data  |   |\n");
+    dbg(GENERAL_CHANNEL, "==============================\n");
 
     // Handle packet based on socket state
     switch(socket.state) {
