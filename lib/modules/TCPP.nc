@@ -388,8 +388,8 @@ implementation {
         }
 
        
-        sendDat(socketFD, myData, TCP_PAYLOAD_SIZE);
-      //  sendDat(socketFD, temp_buffer, TCP_PAYLOAD_SIZE);
+        //sendDat(socketFD, myData, TCP_PAYLOAD_SIZE);
+        sendDat(socketFD, temp_buffer, TCP_PAYLOAD_SIZE);
         call PacketTimer.startOneShot(call PacketTimer.getNow() + 2*socket.RTT);
     }
 
