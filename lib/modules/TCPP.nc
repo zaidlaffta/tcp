@@ -655,8 +655,7 @@ implementation {
                 dbg(TRANSPORT_CHANNEL, "[Error] recieve: Invalid socket state %s\n", dbg_string);
         }
     }*/
-
-    command void TCP.receive(pack* msg) {
+command void TCP.receive(pack* msg) {
     socket_t socketFD;
     socket_store_t socket;
     tcp_header header;
@@ -692,32 +691,32 @@ implementation {
     logSocket(&socket);
     dbg(TRANSPORT_CHANNEL, "---------------------------\n\n");
 
+    dbg(GENERAL_CHANNEL, "Processing received data...\n");
+
     // Handle packet based on socket state
     switch(socket.state) {
         case CLOSED:
-            // If FIN flag is received in CLOSED state, acknowledge and close the socket
             if (header.flag == FIN) {
                 sendAck(socketFD, msg);
                 call SocketMap.remove(socketFD);
+                dbg(GENERAL_CHANNEL, "Connection closed with Node %hu\n", msg->src);
             }
             break;
 
         case LISTEN:
-            // If SYN flag is received in LISTEN state, initiate connection
-            if (header.flag == SYN){  
+            if (header.flag == SYN) {  
                 sendSyn(socketFD);
                 sendAck(socketFD, msg);
                 updateState(socketFD, SYN_RCVD);
+                dbg(GENERAL_CHANNEL, "Connection established with Node %hu\n", msg->src);
             }
             break;
 
         case ESTABLISHED:
             if (header.flag == DAT) {
-                // Check if the data is already acknowledged
                 if (isAcked(socketFD, header.seq)) {
                     break;
                 }
-                // Send an acknowledgment for the data
                 sendAck(socketFD, msg);
 
                 // Process received data and update buffer
@@ -726,33 +725,31 @@ implementation {
                         socket.rcvdBuff[i] = header.payload[i];
                     }
                     socket.lastRcvd = header.payload_size;
-                }
-                else if (socket.lastRcvd + header.payload_size >= SOCKET_BUFFER_SIZE) {
+                } else if (socket.lastRcvd + header.payload_size >= SOCKET_BUFFER_SIZE) {
                     uint16_t extra = socket.lastRcvd + header.payload_size - SOCKET_BUFFER_SIZE;
                     for (i = 0; i < header.payload_size - extra; i++) {
                         socket.rcvdBuff[socket.lastRcvd + i] = header.payload[i];
                     }
                     for (i = 0; i < extra; i++) {
-                        socket.rcvdBuff[i] = header.payload[header.payload_size-extra-i];
+                        socket.rcvdBuff[i] = header.payload[header.payload_size - extra - i];
                     }
                     socket.lastRcvd = extra;
-                } 
-                else {
+                } else {
                     for (i = 0; i < header.payload_size; i++) {
-                        socket.rcvdBuff[socket.lastRcvd+i] = header.payload[i];
+                        socket.rcvdBuff[socket.lastRcvd + i] = header.payload[i];
                     }
                     socket.lastRcvd += header.payload_size;
                 }
 
-                // Print each byte of received data in a more readable format
-                dbg(GENERAL_CHANNEL, "Received data in hex format:\n");
+                // Print received data in both hex and decimal format with a descriptive layout
+                dbg(GENERAL_CHANNEL, "Received data (Hex | Decimal):\n");
                 for (i = 0; i < header.payload_size; i++) {
-                    dbg(GENERAL_CHANNEL, "0x%02X ", header.payload[i]);
-                    if ((i + 1) % 8 == 0) {  // Print 8 bytes per line
-                        dbg(GENERAL_CHANNEL, "\n");
+                    dbg(GENERAL_CHANNEL, "0x%02X | %3u ", header.payload[i], header.payload[i]);
+                    if ((i + 1) % 8 == 0) {
+                        dbg(GENERAL_CHANNEL, "\n");  // Print 8 bytes per line
                     }
                 }
-                dbg(GENERAL_CHANNEL, "\n");
+                dbg(GENERAL_CHANNEL, "\n\n"); // Newline for formatting
 
                 updateSocket(socketFD, socket);
                 printUnread(socketFD);
@@ -761,14 +758,16 @@ implementation {
                 call PacketTimer.stop();
                 removeAck(header);
                 fill(&socket, 0);
-                socket.nextExpected = header.seq+1;
+                socket.nextExpected = header.seq + 1;
                 updateSocket(socketFD, socket);
                 sendNextData(socketFD);
+                dbg(GENERAL_CHANNEL, "ACK received from Node %hu; ready to send next data.\n", msg->src);
             }
             else if (header.flag == FIN) {
                 sendAck(socketFD, msg);
                 sendFin(socketFD);
                 updateState(socketFD, CLOSED);
+                dbg(GENERAL_CHANNEL, "FIN received; connection closed with Node %hu.\n", msg->src);
             }
             break;
 
@@ -778,6 +777,7 @@ implementation {
                 call PacketTimer.stop();
                 removeAck(header);
                 sendNextData(socketFD);
+                dbg(GENERAL_CHANNEL, "Connection established with Node %hu after ACK.\n", msg->src);
             }
             else if (header.flag == SYN) {
                 sendAck(socketFD, msg);
@@ -797,6 +797,7 @@ implementation {
                 updateState(socketFD, ESTABLISHED);
                 call PacketTimer.stop();
                 removeAck(header);
+                dbg(GENERAL_CHANNEL, "Connection moved to ESTABLISHED state after ACK from Node %hu.\n", msg->src);
             }
             else if (header.flag == DAT) {
                 updateState(socketFD, ESTABLISHED);
@@ -811,8 +812,11 @@ implementation {
         default:
             getState(socket.state, dbg_string);
             dbg(TRANSPORT_CHANNEL, "[Error] receive: Invalid socket state %s\n", dbg_string);
+            dbg(GENERAL_CHANNEL, "Invalid socket state encountered. Check state machine for issues.\n");
     }
 }
+
+  
 
 
    
