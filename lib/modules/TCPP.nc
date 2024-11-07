@@ -7,7 +7,7 @@
 
 module TCPP {
     provides interface TCP;
-
+    //Interfaces 
     uses interface Timer<TMilli> as PacketTimer;
     uses interface Hashmap<socket_store_t> as SocketMap;
     uses interface List<socket_store_t> as ServerList;
@@ -15,18 +15,15 @@ module TCPP {
 }
 
 implementation {
-    /* SECTION: Member Variables */
-
-    socket_t next_fd = 1; 
-    uint16_t* node_seq; 
-    const uint16_t default_rtt = 1000; 
+    //General verilables
+    socket_t next_fd = 1;   //next available file dicripter
+    uint16_t* node_seq;     //Node sequence number 
+    const uint16_t default_rtt = 200;    //default rount trip time
     uint8_t temp_buffer[TCP_PAYLOAD_SIZE]; 
 
     //uint8_t myData[] = "Hello, TinyOS!";
    // uint16_t dataSize = sizeof(myData) - 1;  // Exclude the null terminator
 
-
-    /* SECTION: Prototypes */
 
     void sendSyn(socket_t socketFD);
     void sendAck(socket_t socketFD, pack* original_message);
@@ -565,7 +562,7 @@ implementation {
                         socket.lastRcvd += header.payload_size;
                     }
                     for (i = 0; i < header.payload_size; i++) {
-                     dbg(GENERAL_CHANNEL, "received data, %hhu,\n", header.payload[i]);
+                     dbg(GENERAL_CHANNEL, "received data: %hhu,\n", header.payload[i]);
                     }
 
                     updateSocket(socketFD, socket);
