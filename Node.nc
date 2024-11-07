@@ -23,11 +23,10 @@ module Node {
 }
 
 implementation {
-    // Global Variables
     pack sendPackage;                  // Reusable packet struct to prepare outgoing messages
     uint16_t current_seq = 1;          // Packet sequence counter
 
-    // Prototypes
+
     void makePack(pack *Package, uint16_t src, uint16_t dest, uint16_t TTL, uint16_t Protocol, uint16_t seq, uint8_t *payload, uint8_t length);
     void pingHandler(pack* msg);       // Processes received ping messages
     uint32_t randNum(uint32_t min, uint32_t max);  // Generates random number within a range
@@ -156,9 +155,8 @@ implementation {
     event void CommandHandler.printLinkState() { dbg(GENERAL_CHANNEL, "printLinkState\n"); }
 
     ////////////////////////////////// CommandHandler.printDistanceVector /////////////////////////////////
-    // Outputs the distance vector routing table for debugging
+    // Outputs link state routing 
     event void CommandHandler.printDistanceVector() {
-        call Routing.printRoutingTable();
     }
 
     ////////////////////////////////// CommandHandler.setTestServer /////////////////////////////////
