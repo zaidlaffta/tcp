@@ -489,6 +489,8 @@ implementation {
         tcp_header header;
         char dbg_string[20];
         uint16_t i;
+        uint16_t x;  // Declare at the start
+
         
         // Retrieve TCP header from packet
         memcpy(&header, &(msg->payload), PACKET_MAX_PAYLOAD_SIZE);
@@ -564,8 +566,8 @@ implementation {
                     }
                     for (i = 0; i < header.payload_size; i++) {
                         dbg(GENERAL_CHANNEL, "Received Data: ");
-                        for (uint16_t i = 0; i < header.payload_size; i++) {
-                            dbg(GENERAL_CHANNEL, "%hhu, ", header.payload[i]);
+                        for (x = x; x < header.payload_size; x++) {
+                            dbg(GENERAL_CHANNEL, "%hhu, ", header.payload[x]);
                         }
                         dbg(GENERAL_CHANNEL, "\n");  // End the line after all data is printed
 
