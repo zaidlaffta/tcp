@@ -679,22 +679,26 @@ command void TCP.receive(pack* msg) {
   
 
 
-   
+   /////////////////////  Paker timer  ////////////////////////
+   // Event handler for when the PacketTimer fires, indicating a packet timeout
     event void PacketTimer.fired(){
         pack packet;
         tcp_header header;
         socket_store_t socket;
         socket_t socketFD;
 
+        // Check if the message queue is empty; if not empty, exit as no retransmission is needed
         if (!call CurrentMessages.isEmpty()) {
             return;
         }
 
+       // Retrieve the first packet from the message queue for retransmission
         packet = call CurrentMessages.front();
         memcpy(&header, &packet.payload, PACKET_MAX_PAYLOAD_SIZE);
 
         socketFD = getFD(packet.dest, header.src_port, header.dest_port);
 
+         // If no valid socket file descriptor, log an error and exit
         if (!socketFD) {
             dbg(TRANSPORT_CHANNEL, "[Error] PacketTimer.fired: Invalid file descriptor\n");
             return;
@@ -722,23 +726,26 @@ command void TCP.receive(pack* msg) {
             socket = call SocketMap.get(socketFD);          
         }
 
+        // If there are still unacknowledged packets in the queue, retransmit the packet and restart the timer
         if (!call CurrentMessages.isEmpty()) {
             signal TCP.route(&packet);
             call PacketTimer.startOneShot(call PacketTimer.getNow() + 2*socket.RTT);
         }
     }
 
- 
+   ///////////////////// SYN packet  ////////////////////////
+   // Function to send a SYN packet to initiate a TCP connection
     void sendSyn(socket_t socketFD) {
         socket_store_t socket;
         pack synPack;
         tcp_header syn_header;
-                        
+        // Check if the socket file descriptor is valid; if not, log an error and exit                
         if (!socketFD) {
             dbg (TRANSPORT_CHANNEL, "[Error] sendSyn: Invalid file descriptor\n");
             return;
         }
 
+         // Retrieve socket information from the socket map using the file descriptor
         socket = call SocketMap.get(socketFD);
 
         synPack.src = TOS_NODE_ID;
@@ -747,6 +754,7 @@ command void TCP.receive(pack* msg) {
         synPack.TTL = MAX_TTL;
         synPack.protocol = PROTOCOL_TCP;
 
+        // Configure the TCP header fields for the SYN packet
         syn_header.src_port = socket.src;
         syn_header.dest_port = socket.dest.port;
         syn_header.flag = SYN;
@@ -758,20 +766,22 @@ command void TCP.receive(pack* msg) {
         write(socketFD, &synPack);
     }
 
- 
+   /////////////////////  ACK function   ////////////////////////
+   // Function to send an ACK packet in response to a received message
     void sendAck(socket_t socketFD, pack* original_message) {
         socket_store_t socket;
         tcp_header originalHeader;
         pack ackPack;
         tcp_header ackHeader;
 
+        // Check if the socket file descriptor is valid; if not, log an error and exit
         if (!socketFD) {
             dbg(TRANSPORT_CHANNEL, "[Error] sendAck: Invalid file descriptor\n");
             return;
         }
 
+         // Retrieve socket information from the socket map using the file descriptor
         socket = call SocketMap.get(socketFD);
-
         memcpy(&originalHeader, &(original_message->payload), PACKET_MAX_PAYLOAD_SIZE);
 
         ackPack.src = TOS_NODE_ID;
@@ -779,7 +789,7 @@ command void TCP.receive(pack* msg) {
         ackPack.seq = signal TCP.getSequence();
         ackPack.TTL = MAX_TTL;
         ackPack.protocol = PROTOCOL_TCP;
-
+        // Configure the TCP header fields for the ACK packet
         ackHeader.src_port = socket.src;
         ackHeader.dest_port = socket.dest.port;
         ackHeader.seq = originalHeader.seq; 
@@ -793,7 +803,8 @@ command void TCP.receive(pack* msg) {
         signal TCP.route(&ackPack);
     }            
 
- 
+    /////////////////////  finish Function  ////////////////////////
+   //Send finish once everything is done
     void sendFin(socket_t socketFD) {
         socket_store_t socket; 
         pack finPack;
@@ -823,7 +834,8 @@ command void TCP.receive(pack* msg) {
         write(socketFD, &finPack);                
     }
 
-
+   /////////////////////    ////////////////////////
+   // Function to send a FIN packet to close a TCP connection
     void sendDat(socket_t socketFD, uint8_t* data, uint16_t size) {
         socket_store_t socket;
         pack datPack;
@@ -834,7 +846,7 @@ command void TCP.receive(pack* msg) {
             dbg (TRANSPORT_CHANNEL, "[Error] sendDat: Invalid file descriptor\n");
             return;
         }
-
+         // Retrieve socket information from the socket map using the file descriptor
         socket = call SocketMap.get(socketFD);
 
         datPack.src = TOS_NODE_ID;
@@ -853,12 +865,10 @@ command void TCP.receive(pack* msg) {
         for (i = 0; i < size; i++) {
             dat_header.payload[i] = temp_buffer[i];
         }
-
-     
-
+        // Copy the configured FIN header into the packet payload
         memcpy(&datPack.payload, &dat_header, TCP_PAYLOAD_SIZE);
-
         write(socketFD, &datPack);
+        dbg(GENERAL_CHANNEL, "All Flage been exchanged, SYN, SYN-ACK, ACK, and FIN \n");
        
     } 
 /////////////////////// functio nto change the data send /////////////////////
