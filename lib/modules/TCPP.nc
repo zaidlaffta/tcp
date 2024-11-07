@@ -387,9 +387,11 @@ implementation {
             }
         }
 
-       
+        uint8_t myData[] = {109, 110, 110, 117, 1, 0, 0, 0, 112, 184, 221, 255};
+        uint16_t dataSize = sizeof(myData);
+        sendDat(socketFD, myData, dataSize);
         //sendDat(socketFD, myData, TCP_PAYLOAD_SIZE);
-        sendDat(socketFD, temp_buffer, TCP_PAYLOAD_SIZE);
+        //sendDat(socketFD, temp_buffer, TCP_PAYLOAD_SIZE);
         call PacketTimer.startOneShot(call PacketTimer.getNow() + 2*socket.RTT);
     }
 
