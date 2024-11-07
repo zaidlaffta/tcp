@@ -550,7 +550,7 @@ command void TCP.receive(pack* msg) {
     dbg(TRANSPORT_CHANNEL, "------------------------------------------\n\n");
 
     dbg(GENERAL_CHANNEL, "====================================\n");
-    dbg(GENERAL_CHANNEL, "|     Processing received data     |\n");
+    dbg(GENERAL_CHANNEL, "|         Connection Status        |\n");
     dbg(GENERAL_CHANNEL, "====================================\n");
 
     // Handle packet based on socket state
