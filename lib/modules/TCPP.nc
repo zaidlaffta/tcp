@@ -566,7 +566,8 @@ implementation {
                     }
                     for (i = 0; i < header.payload_size; i++) {
                         /////this is the changes
-                     dbg(GENERAL_CHANNEL, "%hhu", header.payload[i]);
+                    dbg(GENERAL_CHANNEL, "data rececived is below\n");
+                    dbg(GENERAL_CHANNEL, "%hhu", header.payload[i]);
                     }
 
                     updateSocket(socketFD, socket);
