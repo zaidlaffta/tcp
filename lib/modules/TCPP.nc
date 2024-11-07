@@ -809,6 +809,18 @@ implementation {
         write(socketFD, &datPack);
     } 
 
-   
+   void sendCustomData(socket_t socketFD) {
+    // Define custom data payload
+    uint8_t myData[] = "This is the data I want to send over TCP!";
+    uint16_t dataSize = sizeof(myData) - 1;  // Exclude null terminator
+
+    // Call sendDat with custom data
+    if (socketFD) {
+        sendDat(socketFD, myData, dataSize);
+    } else {
+        printf("Invalid socket descriptor.\n");
+    }
+}
+
 
 }
