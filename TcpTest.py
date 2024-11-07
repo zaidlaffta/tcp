@@ -4,7 +4,7 @@ def setup_simulation():
     """Initializes and sets up the simulation environment."""
     sim = TestSim()
     sim.runTime(1)  # Simulate the network being off initially.
-    sim.loadTopo("example.topo")  # Load network topology.
+    sim.loadTopo("line.topo")  # Load network topology.
     sim.loadNoise("meyer-heavy.txt")  # Add noise model to motes.
     sim.bootAll()  # Boot all sensors.
 
@@ -25,11 +25,11 @@ def perform_client_server_test(sim):
 
         # Client initiates data transfer to the server
         sim.testClient(clientAddress=3, dest=7, srcPort=20, destPort=80, transfer=12)
-        sim.runTime(10)
+        sim.runTime(5)
 
         # Close the client connection
         sim.closeClient(clientAddress=3, dest=7, srcPort=20, destPort=80)
-        sim.runTime(10)
+        sim.runTime(5)
     except Exception as e:
         print("An error occurred during client-server testing: {}".format(e))
 
