@@ -4,7 +4,7 @@ def setup_simulation():
     """Initializes and sets up the simulation environment."""
     sim = TestSim()
     sim.runTime(1)  # Simulate the network being off initially.
-    sim.loadTopo("line.topo")  # Load network topology.
+    sim.loadTopo("example.topo")  # Load network topology.
     sim.loadNoise("meyer-heavy.txt")  # Add noise model to motes.
     sim.bootAll()  # Boot all sensors.
 
