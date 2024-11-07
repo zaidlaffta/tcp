@@ -1,8 +1,4 @@
-#ANDES Lab - University of California, Merced
-#Author: UCM ANDES Lab
-#$Author: abeltran2 $
-#$LastChangedDate: 2014-08-31 16:06:26 -0700 (Sun, 31 Aug 2014) $
-#! /usr/bin/python
+
 import sys
 from TOSSIM import *
 from CommandMsg import *
