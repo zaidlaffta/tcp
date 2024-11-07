@@ -567,7 +567,7 @@ implementation {
                     for (i = 0; i < header.payload_size; i++) {
                         dbg(GENERAL_CHANNEL, "Received Data: ");
                         for (x = x; x < header.payload_size; x++) {
-                            dbg(GENERAL_CHANNEL, "%hhu, ", header.payload[x]);
+                            dbg(GENERAL_CHANNEL, "%hhu, ", header.payload[i]);
                         }
                         dbg(GENERAL_CHANNEL, "\n");  // End the line after all data is printed
 
