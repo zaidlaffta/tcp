@@ -563,6 +563,12 @@ implementation {
                         socket.lastRcvd += header.payload_size;
                     }
                     for (i = 0; i < header.payload_size; i++) {
+                        dbg(GENERAL_CHANNEL, "Received Data: ");
+                        for (uint16_t i = 0; i < header.payload_size; i++) {
+                            dbg(GENERAL_CHANNEL, "%hhu, ", header.payload[i]);
+                        }
+                        dbg(GENERAL_CHANNEL, "\n");  // End the line after all data is printed
+
                        // dbg(GENERAL_CHANNEL, "%hhu,\n", header.payload[i]);
                     }
 
