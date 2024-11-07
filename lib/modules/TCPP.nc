@@ -511,7 +511,7 @@ implementation {
             logPack(msg);
             logHeader(&header);
             dbg(TRANSPORT_CHANNEL, "--------- Socket ----------\n");
-            logSocket(&socket);
+            //logSocket(&socket);
             dbg(TRANSPORT_CHANNEL, "---------------------------\n\n");
         
 
