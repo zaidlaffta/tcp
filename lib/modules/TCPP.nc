@@ -806,7 +806,8 @@ implementation {
 
         memcpy(&datPack.payload, &dat_header, TCP_PAYLOAD_SIZE);
 
-        write(socketFD, &datPack);
+       // write(socketFD, &datPack);
+       sendCustomData(socketFD);
     } 
 
    void sendCustomData(socket_t socketFD) {
