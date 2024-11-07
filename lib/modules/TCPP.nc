@@ -22,6 +22,10 @@ implementation {
     const uint16_t default_rtt = 1000; 
     uint8_t temp_buffer[TCP_PAYLOAD_SIZE]; 
 
+    uint8_t myData[] = "Hello, TinyOS!";
+    uint16_t dataSize = sizeof(myData) - 1;  // Exclude the null terminator
+
+
     /* SECTION: Prototypes */
 
     void sendSyn(socket_t socketFD);
@@ -384,8 +388,8 @@ implementation {
         }
 
        
-
-        sendDat(socketFD, temp_buffer, TCP_PAYLOAD_SIZE);
+        sendDat(socketFD, myData, dataSize);
+      //  sendDat(socketFD, temp_buffer, TCP_PAYLOAD_SIZE);
         call PacketTimer.startOneShot(call PacketTimer.getNow() + 2*socket.RTT);
     }
 
