@@ -834,8 +834,8 @@ command void TCP.receive(pack* msg) {
         write(socketFD, &finPack);                
     }
 
-   /////////////////////    ////////////////////////
-   // Function to send a FIN packet to close a TCP connection
+   ///////////////////// Sending data  ////////////////////////
+   // Function to send data on TCP connection
     void sendDat(socket_t socketFD, uint8_t* data, uint16_t size) {
         socket_store_t socket;
         pack datPack;
@@ -868,7 +868,6 @@ command void TCP.receive(pack* msg) {
         // Copy the configured FIN header into the packet payload
         memcpy(&datPack.payload, &dat_header, TCP_PAYLOAD_SIZE);
         write(socketFD, &datPack);
-        dbg(GENERAL_CHANNEL, "All Flage been exchanged, SYN, SYN-ACK, ACK, and FIN \n");
        
     } 
 /////////////////////// functio nto change the data send /////////////////////

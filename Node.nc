@@ -181,6 +181,8 @@ implementation {
        // dbg(GENERAL_CHANNEL, "CLOSE_CLIENT EVENT\n");
         call TCP.closeClient(dest, srcPort, destPort);
         dbg(GENERAL_CHANNEL, "Client has been closed \n");
+        dbg(GENERAL_CHANNEL, "All Flage been exchanged, SYN, SYN-ACK, ACK, and FIN \n");
+
     }
 
     event void CommandHandler.setAppServer() { }
